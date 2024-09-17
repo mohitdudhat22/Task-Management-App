@@ -11,10 +11,10 @@ dotenv.config();
 dbConnect();
 app.use(express.json());
 app.use(cors(
-    {
-        origin: '*',
-        credentials: true,
-    }
+    app.use(cors({
+        origin: 'https://task-management-app-xi-six.vercel.app',
+        credentials: true
+      }))
 ));
 
 
