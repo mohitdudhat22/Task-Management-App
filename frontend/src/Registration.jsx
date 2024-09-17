@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useState, useEffect } from 'react';
+const API_URL = import.meta.env.VITE_API_URL;
 
 function Registration() {
     const [name, setName] = useState('');
@@ -31,7 +32,7 @@ function Registration() {
         setSuccessMessage('');
         if (isFormValid) {
             try {
-                const response = await axios.post('http://localhost:8080/api/auth/register', {
+                const response = await axios.post(`${API_URL}/api/auth/register`, {
                     Name: name,
                     Email: email,
                     Password: password,
