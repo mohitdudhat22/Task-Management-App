@@ -37,9 +37,6 @@ function Registration() {
                     Email: email,
                     Password: password,
                     Role: role || 'user'
-                }, {
-                    withCredentials: true, // This is important for handling cookies
-                    headers:{'Access-Control-Allow-Origin': '*'}
                 });
                 console.log('Registration successful:', response.data);
                 setSuccessMessage(response.data.message);

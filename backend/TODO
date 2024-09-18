@@ -1,0 +1,13 @@
+// get all the Users (This is over team)
+// admin can create the tasks and assign it to the e
+
+// assign/mohit (admin) ->> mohit's User -> createTask(data);
+// adming ->> all Us
+//   {
+//     task : react;
+//     assignedTo[:mohit];
+//     assignedBy: dheiry
+//   }
+//   mohit find -> react add in task
+
+// user personal (add here)

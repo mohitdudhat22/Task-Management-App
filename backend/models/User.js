@@ -17,6 +17,10 @@ const User = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Task',
     },
+    fcmToken: {
+        type: String,
+        default: "null",
+      },
     Role: { type: String, enum: ['admin', 'user'], default: 'user' }
 },{timestamps: true});
 const UserModel = mongoose.model("User", User);

@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { toast, Toaster } from "react-hot-toast";
+import { toast } from "react-hot-toast";
 import axios from "axios";
+import io from 'socket.io-client';
 
 const API_URL = import.meta.env.VITE_API_URL;
+const socket = io(API_URL);
 
 function Todo() {
   const [todos, setTodos] = useState({ current: [], pending: [], completed: [] });
@@ -13,6 +15,42 @@ function Todo() {
 
   useEffect(() => {
     fetchTasks();
+
+    socket.on('update-task-list', (updatedTask) => {
+      setTodos(prev => ({
+        ...prev,
+        [updatedTask.Status]: prev[updatedTask.Status]?.map(task => 
+          task._id === updatedTask._id ? updatedTask : task
+        ) || []
+      }));
+      fetchTasks();
+    });
+
+    socket.on('add-new-task', (newTask) => {
+      setTodos(prev => {
+        const status = newTask.status || 'current'; // Default to 'current' if status is undefined
+        fetchTasks();
+        return {
+          ...prev,
+          [status]: Array.isArray(prev[status]) 
+            ? [...prev[status], newTask] 
+            : [newTask]
+        };
+      });
+    });
+
+    socket.on('delete-task', ({ id, status }) => {
+      setTodos(prev => ({
+        ...prev,
+        [status]: prev[status].filter(todo => todo._id !== id)
+      }));
+    });
+  
+    return () => {
+      socket.off('update-task-list');
+      socket.off('add-new-task');
+      socket.off('delete-task');
+    };
   }, []);
 
   const getAuthHeaders = () => {
@@ -44,6 +82,10 @@ function Todo() {
         description: "",
         status: "current"
       }, getAuthHeaders());
+
+      // Emit socket event for new task
+      socket.emit('new-task', response.data);
+
       setTodos(prev => ({
         ...prev,
         current: [...prev.current, response.data]
@@ -84,6 +126,10 @@ function Todo() {
         description: "",
         status: "current"
       }, getAuthHeaders());
+
+      // Emit socket event for updated task
+      socket.emit('task-updated', response.data);
+
       setTodos(prev => ({
         ...prev,
         current: prev.current.map(item => 
@@ -100,6 +146,7 @@ function Todo() {
       setEditId(null);
       setTodo("");
       toast.success("Todo updated successfully!");
+      fetchTasks();
     } catch (error) {
       toast.error("Failed to update todo");
       console.error(error);
@@ -108,16 +155,20 @@ function Todo() {
 
   const changeStatus = async (id, currentStatus, newStatus) => {
     try {
-      console.log(id, currentStatus, newStatus);
       const response = await axios.put(`${API_URL}/api/edit/${id}`, {
         status: newStatus
       }, getAuthHeaders());
+
+      // Emit socket event for updated task
+      socket.emit('task-updated', response.data);
+
       setTodos(prev => ({
         ...prev,
         [currentStatus]: prev[currentStatus].filter(todo => todo._id !== id),
         [newStatus]: [...prev[newStatus], response.data]
       }));
       toast.success(`Todo moved to ${newStatus}!`);
+      fetchTasks();
     } catch (error) {
       toast.error("Failed to update todo status");
       console.error(error);
@@ -213,24 +264,26 @@ function Todo() {
                             </div>
                             <div className="flex space-x-2">
                               {status === 'current' && (
-                                <button
-                                  onClick={() => changeStatus(todo._id, 'current', 'pending')}
-                                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm transition duration-300 ease-in-out"
-                                >
-                                  Start
-                                </button>
+                                <>
+                                  <button
+                                    onClick={() => changeStatus(todo._id, 'current', 'pending')}
+                                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm transition duration-300 ease-in-out"
+                                  >
+                                    Start
+                                  </button>
+                                  <button
+                                    onClick={() => editTodo(todo._id, status)}
+                                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-full text-sm transition duration-300 ease-in-out"
+                                  >
+                                    Edit
+                                  </button>
+                                </>
                               )}
                               <button
                                 onClick={() => deleteTodo(todo._id, status)}
                                 className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-sm transition duration-300 ease-in-out"
                               >
                                 Delete
-                              </button>
-                              <button
-                                onClick={() => editTodo(todo._id, status)}
-                                className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-full text-sm transition duration-300 ease-in-out"
-                              >
-                                Edit
                               </button>
                             </div>
                           </div>
@@ -245,7 +298,6 @@ function Todo() {
           ))}
         </div>
       </DragDropContext>
-      <Toaster position="bottom-right" />
     </div>
   );
 }
