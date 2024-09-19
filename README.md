@@ -21,7 +21,7 @@ Before you begin, ensure you have met the following requirements:
 
 1. Clone the repository:
    ```bash
-   git clone [https://github.com//task-management-app.git](https://github.com/mohitdudhat22/Task-Management-App)
+   git clone https://github.com//task-management-app.git
    cd task-management-app
    ```
 
@@ -86,13 +86,13 @@ Before you begin, ensure you have met the following requirements:
 ## API Endpoints
 
 - *Tasks*:
-  - \GET /api/tasks\ - Get all tasks
-  - \POST /api/tasks\ - Create a new task
-  - \PUT /api/tasks/:id\ - Update a task
-  - \DELETE /api/tasks/:id\ - Delete a task
+  - `GET /api/tasks` - Get all tasks
+  - `POST /api/tasks` - Create a new task
+  - `PUT /api/tasks/:id` - Update a task
+  - `DELETE /api/tasks/:id` - Delete a task
 
 - *User Management*:
-  - \POST /api/users/:id/assign\ - Assign a task to a user
+  - POST `/api/users/:id/assign` - Assign a task to a user
 
 - *Firebase Notifications*:
   - Push notifications for task updates via FCM
