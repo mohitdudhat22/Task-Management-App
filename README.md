@@ -41,7 +41,7 @@ Before you begin, ensure you have met the following requirements:
    - Create a Firebase project and enable Cloud Messaging.
    - Obtain your FCM server key and add it to your environment variables.
 
-6. Create a \.env\ file in the backend directory and add your MongoDB connection string, FCM keys, and JWT secret:
+6. Create a `.env` file in the backend directory and add your MongoDB connection string, FCM keys, and JWT secret:
    ```bash
    MONGODB_URI=your_mongodb_connection_string
    JWT_SECRET=your_jwt_secret
@@ -52,17 +52,10 @@ Before you begin, ensure you have met the following requirements:
 
 1. For the frontend, ensure that you are using *Vite* for faster builds and development experience.
    ```bash
-   npm init vite@latest
+   npm i
    ```
 
-2. Choose your project name and select *React* as the framework.
-
-3. Once Vite is set up, install the necessary dependencies for React:
-   ```bash
-   npm install
-   ```
-
-4. To start the frontend development server:
+2. To start the frontend development server:
   ```bash
    npm run dev
    ```
@@ -81,7 +74,7 @@ Before you begin, ensure you have met the following requirements:
    npm run dev
    ```
 
-3. Open your browser and navigate to \http://localhost:5173\ to view the app.
+3. Open your browser and navigate to `http://localhost:5173` to view the app.
 
 ## API Endpoints
 
