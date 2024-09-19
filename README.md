@@ -20,67 +20,66 @@ Before you begin, ensure you have met the following requirements:
 ## Installation
 
 1. Clone the repository:
-   \\\`bash
+   ```bash
    git clone [https://github.com//task-management-app.git](https://github.com/mohitdudhat22/Task-Management-App)
    cd task-management-app
-   \\\`
+   ```
 
 2. Install backend dependencies:
-   \\\`bash
+   ```bash
    cd backend
    npm install
-   \\\`
+   ```
 
 3. Install frontend dependencies:
-   \\\`bash
+   ```bash
    cd ../frontend
-   
    npm install
-   \\\`
+   ```
 
 5. Set up Firebase push notifications:
    - Create a Firebase project and enable Cloud Messaging.
    - Obtain your FCM server key and add it to your environment variables.
 
 6. Create a \.env\ file in the backend directory and add your MongoDB connection string, FCM keys, and JWT secret:
-   \\\`bash
+   ```bash
    MONGODB_URI=your_mongodb_connection_string
    JWT_SECRET=your_jwt_secret
    FCM_SERVER_KEY=your_fcm_server_key
-   \\\`
+   ```
 
 ## Vite Setup
 
 1. For the frontend, ensure that you are using *Vite* for faster builds and development experience.
-   \\\`bash
+   ```bash
    npm init vite@latest
-   \\\`
+   ```
 
 2. Choose your project name and select *React* as the framework.
 
 3. Once Vite is set up, install the necessary dependencies for React:
-   \\\`bash
+   ```bash
    npm install
-   \\\`
+   ```
 
 4. To start the frontend development server:
-   \\\`bash
+  ```bash
    npm run dev
-   \\\`
+   ```
 
 ## Usage
 
 1. Start the backend server:
-   \\\`bash
+   ```bash
    cd backend
    node index.js
-   \\\`
+   ```
 
 2. Start the frontend server (Vite):
-   \\\`bash
+   ```bash
    cd ../frontend
    npm run dev
-   \\\`
+   ```
 
 3. Open your browser and navigate to \http://localhost:5173\ to view the app.
 
