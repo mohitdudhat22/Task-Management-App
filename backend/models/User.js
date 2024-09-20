@@ -13,10 +13,10 @@ const User = mongoose.Schema({
         type: String,
         required: true,
     },
-    Tasks: {
+    Tasks: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Task',
-    },
+    }],
     fcmToken: {
         type: String,
         default: "null",

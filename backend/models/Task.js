@@ -13,6 +13,15 @@ const Task = mongoose.Schema({
         default: 'current',
         enum: ['current','pending', 'completed'],
     },
+    Priority: {
+        type: String,
+        default: 'low',
+        enum: ['low', 'medium', 'high'],
+    },
+    DueDate: {
+        type: Date,
+        default: null,
+    },
     AssignedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

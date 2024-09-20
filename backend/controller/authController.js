@@ -21,7 +21,7 @@ const register = async (req, res) => {
     user = new UserModel({ Name, Email, Password: hashedPassword, Role });
     await user.save();
     console.log(user);
-    const payload = { user: { id: user.id } };
+    const payload = { user: { id: user.id, role: user.Role } };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.cookie('token', token, { httpOnly: true});
     res.status(200).json({ message: 'User registered successfully', token , user });
@@ -49,7 +49,7 @@ const login = async (req, res) => {
     const isMatch = await bcrypt.compare(Password, user.Password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-    const payload = { user: { id: user.id } };
+    const payload = { user: { id: user.id, role: user.Role } };
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
     res.cookie('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production' });
     res.status(200).json({ message: 'User logged in successfully', token });
