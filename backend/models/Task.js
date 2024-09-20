@@ -27,7 +27,6 @@ const Task = mongoose.Schema({
         default: false , // True if assigned by admin, false if by user
         required : false
     }
-
 },{timestamps: true});
 const TaskModel = mongoose.model("Task", Task);
 module.exports = TaskModel;

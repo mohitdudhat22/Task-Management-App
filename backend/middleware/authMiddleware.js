@@ -8,7 +8,7 @@ const authMiddleware = async(req, res, next) => {
     }
     try {
         const decoded = jwt.decode(token.split(' ')[1]);
-        req.user = decoded;
+        req.user = decoded.user;
         console.log(req.user, 'req.user');
         next();
     } catch (error) {
