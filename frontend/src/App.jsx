@@ -35,8 +35,8 @@ function App() {
           color: 'text.primary',
         }}
       >
-        <Routes>
-          <Route path="/" element={<Login />} />
+        <Routes >
+          <Route index path="/" element={<Login />} />
           <Route path="/register" element={<Registration />} />
           <Route 
             path="/dashboard/*" 
