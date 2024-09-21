@@ -43,7 +43,7 @@ const allowedOrigins = [
 //     credentials: true
 // }));
 
-app.use('/notifications', notificationRoutes);
+// app.use('/notifications', notificationRoutes);
 app.use('/api', taskRouter);
 app.use('/api/auth', authRouter);
 app.use('/team',teamRoute )
