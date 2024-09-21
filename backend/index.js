@@ -20,16 +20,16 @@ initSocket(server);
 
 app.use(express.json());
 
-
 const allowedOrigins = [
-        "https://task-management-app-navy-three.vercel.app",
-        "http://localhost:5173",
+    "https://task-management-app-xi-six.vercel.app",
+    "https://task-management-app-navy-three.vercel.app",
+    "http://localhost:5173",
+    process.env.FRONTEND_URL
   ];
-
   
   const corsOptions = {
     origin: function (origin, callback) {
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
         callback(null, true);
       } else {
         callback(new Error("Not allowed by CORS"));
@@ -37,11 +37,8 @@ const allowedOrigins = [
     },
     credentials: true,
   };
-
-// app.use(cors({
-//     origin: "*",
-//     credentials: true
-// }));
+  
+  app.use(cors(corsOptions));
 
 // app.use('/notifications', notificationRoutes);
 app.use('/api', taskRouter);

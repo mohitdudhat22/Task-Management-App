@@ -16,7 +16,7 @@ import MuiCard from '@mui/material/Card';
 import Divider from '@mui/material/Divider';
 import { GoogleIcon, FacebookIcon } from './CustomIcons'; // Custom icons
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: 'flex',

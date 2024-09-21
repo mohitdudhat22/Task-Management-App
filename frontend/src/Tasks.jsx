@@ -77,8 +77,8 @@ function Tasks() {
               return task.Priority.toLowerCase() === value.toLowerCase();
             case 'DueDate':
               if (!task.DueDate) return false;
-              const taskDate = new Date(task.DueDate);
-              const filterDate = new Date(value);
+              let taskDate = new Date(task.DueDate);
+              let filterDate = new Date(value);
               return taskDate.toDateString() === filterDate.toDateString();
             case 'AssignedTo':
               return task.AssignedTo === value;
