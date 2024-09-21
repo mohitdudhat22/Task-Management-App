@@ -19,10 +19,29 @@ cronJobs();
 initSocket(server);
 
 app.use(express.json());
-app.use(cors({
-    origin: "*",
-    credentials: true
-}));
+
+
+const allowedOrigins = [
+    "https://task-management-app-xi-six.vercel.app",
+    "http://localhost:5173",
+  ];
+
+  
+  const corsOptions = {
+    origin: function (origin, callback) {
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  };
+
+// app.use(cors({
+//     origin: "*",
+//     credentials: true
+// }));
 
 app.use('/notifications', notificationRoutes);
 app.use('/api', taskRouter);
