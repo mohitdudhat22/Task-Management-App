@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import io from 'socket.io-client';
 import { toast } from 'react-hot-toast';
+import { v4 as uuidv4 } from 'uuid';
+import PropTypes from 'prop-types';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const socket = io(API_URL);
@@ -170,6 +172,47 @@ export const TodoProvider = ({ children }) => {
     }
   };
 
+  const assignTask = async (taskId, userId) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/assign-task`, {
+        taskId,
+        userId
+      }, getAuthHeaders());
+      console.log(response.data);
+      toast.success("Task assigned successfully");
+      fetchTasks();
+
+    } catch (error) {
+      toast.error("Failed to assign task: " + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const saveFilter = (name, filterConfig) => {
+    const newFilter = { id: uuidv4(), name, config: filterConfig };
+    setSavedFilters(prev => [...prev, newFilter]);
+    toast.success("Filter saved successfully!");
+  };
+
+  const deleteFilter = (filterId) => {
+    setSavedFilters(prev => prev.filter(filter => filter.id !== filterId));
+    toast.success("Filter deleted successfully!");
+  };
+
+  const applyFilter = (filterConfig) => {
+    setFilters(filterConfig);
+    toast.success("Filter applied successfully!");
+  };
+
+  const bulkCreateTasks = async (tasks) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/bulk-create`, tasks, getAuthHeaders());
+      toast.success(`Created ${response.data.length} tasks successfully!`);
+      fetchTasks();
+    } catch (error) {
+      toast.error("Failed to create tasks: " + (error.response?.data?.message || error.message));
+    }
+  };
+
   const value = {
     todos,
     setTodos,
@@ -186,8 +229,17 @@ export const TodoProvider = ({ children }) => {
     deleteTodo,
     updateTodo,
     changeStatus,
-    getAuthHeaders
+    getAuthHeaders,
+    assignTask,
+    saveFilter,
+    deleteFilter,
+    applyFilter,
+    bulkCreateTasks
   };
 
   return <TodoContext.Provider value={value}>{children}</TodoContext.Provider>;
+};
+
+TodoProvider.propTypes = {
+    children: PropTypes.node.isRequired,
 };

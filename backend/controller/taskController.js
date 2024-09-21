@@ -8,6 +8,15 @@ const createTask = async (req, res) => {
 
         const { Title , Description, Status, DueDate, Priority, AssignedTo} = req.body;
         const userId = req.user.id;
+
+        //    const existingTask = await TaskModel.findOne({
+        //     Task: Title,
+        //     AssignedTo: AssignedTo || userId
+        // });
+
+        // if (existingTask) {
+        //     return res.status(400).json({ error: "A task with this title already exists for the assigned user." });
+        // }
         const task = await TaskModel.create({ 
             Task: Title,
             Description: Description, 
@@ -20,11 +29,10 @@ const createTask = async (req, res) => {
         });
 
         //add task in assignedTo user
-        const user = await UserModel.findById(AssignedTo);
+        const user = await UserModel.findById(AssignedTo || userId);
         user.Tasks.push(task);
         await user.save();
         await task.save();
-
 
         getIO().emit('new-task', task);       
          res.status(201).json(task);

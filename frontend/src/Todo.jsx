@@ -1,18 +1,25 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { toast } from "react-hot-toast";
 import { CSVLink } from "react-csv";
 import Papa from 'papaparse';
 import axios from "axios";
 import { useTodoContext } from "./Context/TodoContext";
-
+import {
+  TextField, Button, Select, MenuItem, FormControl, InputLabel,
+  Grid, Paper, Typography, IconButton, Box, Chip
+} from '@mui/material';
+import { Delete as DeleteIcon, Edit as EditIcon, PlayArrow as StartIcon } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-
 function Todo() {
+  const theme = useTheme();
   const {
     todos,
+    setTodos,
+    validateTask,
     filters,
     setFilters,
     sortBy,
@@ -40,7 +47,7 @@ function Todo() {
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [filterName, setFilterName] = useState("");
-  const [selectedUser, setSelectedUser] = useState("");
+  const [selectedUser] = useState("");
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -98,7 +105,7 @@ function Todo() {
         taskId,
         userId: selectedUser
       }, getAuthHeaders());
-
+      console.log(response.data);
       toast.success("Task assigned successfully");
       fetchTasks();
     } catch (error) {
@@ -262,248 +269,303 @@ function Todo() {
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl">
-      <form onSubmit={(e) => e.preventDefault()} className="mb-8 space-y-4">
-        <input
-          type="text"
-          name="Title"
-          value={todo.Title}
-          onChange={handleInputChange}
-          className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter task title"
-          required
-        />
-        <textarea
-          name="Description"
-          value={todo.Description}
-          onChange={handleInputChange}
-          className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter task description"
-        />
-        <select
-          name="Status"
-          value={todo.Status}
-          onChange={handleInputChange}
-          className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="current">Current</option>
-          <option value="pending">Pending</option>
-          <option value="completed">Completed</option>
-        </select>
-        <input
-          type="datetime-local"
-          name="DueDate"
-          value={todo.DueDate}
-          onChange={handleInputChange}
-          className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        <select
-          name="Priority"
-          value={todo.Priority}
-          onChange={handleInputChange}
-          className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="low">Low</option>
-          <option value="medium">Medium</option>
-          <option value="high">High</option>
-        </select>
-        <select
-          name="AssignedTo"
-          value={todo.AssignedTo}
-          onChange={handleInputChange}
-          className="w-full border border-gray-300 p-3 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="">Select User</option>
-          {users?.map(user => (
-            <option key={user._id} value={user._id}>{user.Name}</option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={isEditing ? handleUpdateTodo : handleAddTodo}
-          className="w-full bg-blue-500 hover:bg-blue-600 text-white p-3 rounded transition duration-300 ease-in-out"
-        >
-          {isEditing ? "Update Task" : "Add Task"}
-        </button>
-      </form>
+    <Box sx={{ maxWidth: 1200, margin: 'auto', padding: 4 }}>
+      <Paper elevation={3} sx={{ padding: 3, marginBottom: 4 }}>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Task Title"
+                name="Title"
+                value={todo.Title}
+                onChange={handleInputChange}
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                multiline
+                rows={3}
+                label="Description"
+                name="Description"
+                value={todo.Description}
+                onChange={handleInputChange}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Status</InputLabel>
+                <Select
+                  name="Status"
+                  value={todo.Status}
+                  onChange={handleInputChange}
+                  label="Status"
+                >
+                  <MenuItem value="current">Current</MenuItem>
+                  <MenuItem value="pending">Pending</MenuItem>
+                  <MenuItem value="completed">Completed</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                type="datetime-local"
+                label="Due Date"
+                name="DueDate"
+                value={todo.DueDate}
+                onChange={handleInputChange}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Priority</InputLabel>
+                <Select
+                  name="Priority"
+                  value={todo.Priority}
+                  onChange={handleInputChange}
+                  label="Priority"
+                >
+                  <MenuItem value="low">Low</MenuItem>
+                  <MenuItem value="medium">Medium</MenuItem>
+                  <MenuItem value="high">High</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth>
+                <InputLabel>Assigned To</InputLabel>
+                <Select
+                  name="AssignedTo"
+                  value={todo.AssignedTo}
+                  onChange={handleInputChange}
+                  label="Assigned To"
+                >
+                  <MenuItem value="">Select User</MenuItem>
+                  {users?.map(user => (
+                    <MenuItem key={user._id} value={user._id}>{user.Name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12}>
+              <Button
+                fullWidth
+                variant="contained"
+                color="primary"
+                onClick={isEditing ? handleUpdateTodo : handleAddTodo}
+              >
+                {isEditing ? "Update Task" : "Add Task"}
+              </Button>
+            </Grid>
+          </Grid>
+        </form>
+      </Paper>
 
-      <div className="mb-4 flex justify-between">
-        <CSVLink
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
+        <Button
+          variant="contained"
+          color="success"
+          component={CSVLink}
           data={prepareCSVData()}
           filename={"tasks.csv"}
-          className="bg-green-500 hover:bg-green-600 text-white p-2 rounded"
         >
           Export CSV
-        </CSVLink>
+        </Button>
         <input
           type="file"
           accept=".csv"
           onChange={handleCSVImport}
-          className="hidden"
+          style={{ display: 'none' }}
           id="csvInput"
         />
-        <label htmlFor="csvInput" className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded cursor-pointer">
-          Import CSV
+        <label htmlFor="csvInput">
+          <Button variant="contained" component="span">
+            Import CSV
+          </Button>
         </label>
-      </div>
+      </Box>
 
-      <div className="mb-4 space-y-2">
-        <div className="flex space-x-2">
-          <select
-            value={filters.status || ""}
-            onChange={(e) => setFilters({...filters, status: e.target.value})}
-            className="border border-gray-300 p-2 rounded"
-          >
-            <option value="">All Statuses</option>
-            <option value="current">Current</option>
-            <option value="pending">Pending</option>
-            <option value="completed">Completed</option>
-          </select>
-          <select
-            value={filters.priority || ""}
-            onChange={(e) => setFilters({...filters, priority: e.target.value})}
-            className="border border-gray-300 p-2 rounded"
-          >
-            <option value="">All Priorities</option>
-            <option value="high">High</option>
-            <option value="medium">Medium</option>
-            <option value="low">Low</option>
-          </select>
-          <input
-            type="date"
-            value={filters.dueDate || ""}
-            onChange={(e) => setFilters({...filters, dueDate: e.target.value})}
-            className="border border-gray-300 p-2 rounded"
-          />
-          <input
-            type="text"
-            value={filters.assignedTo || ""}
-            onChange={(e) => setFilters({...filters, assignedTo: e.target.value})}
-            placeholder="Assigned To"
-            className="border border-gray-300 p-2 rounded"
-          />
-        </div>
-        <div className="flex space-x-2">
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="border border-gray-300 p-2 rounded"
-          >
-            <option value="dueDate">Sort by Due Date</option>
-            <option value="priority">Sort by Priority</option>
-            <option value="status">Sort by Status</option>
-          </select>
-          <input
-            type="text"
-            value={filterName}
-            onChange={(e) => setFilterName(e.target.value)}
-            placeholder="Filter Name"
-            className="border border-gray-300 p-2 rounded"
-          />
-          <button
-            onClick={saveCurrentFilter}
-            className="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded"
-          >
-            Save Filter
-          </button>
-        </div>
-        <div className="flex space-x-2 overflow-x-auto">
-          {savedFilters.map((filter, index) => (
-            <button
-              key={index}
-              onClick={() => loadSavedFilter(filter)}
-              className="bg-indigo-500 hover:bg-indigo-600 text-white p-2 rounded whitespace-nowrap"
+      <Paper elevation={2} sx={{ padding: 2, marginBottom: 4 }}>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={3}>
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={filters.status || ""}
+                onChange={(e) => setFilters({...filters, status: e.target.value})}
+                label="Status"
+              >
+                <MenuItem value="">All Statuses</MenuItem>
+                <MenuItem value="current">Current</MenuItem>
+                <MenuItem value="pending">Pending</MenuItem>
+                <MenuItem value="completed">Completed</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <FormControl fullWidth>
+              <InputLabel>Priority</InputLabel>
+              <Select
+                value={filters.priority || ""}
+                onChange={(e) => setFilters({...filters, priority: e.target.value})}
+                label="Priority"
+              >
+                <MenuItem value="">All Priorities</MenuItem>
+                <MenuItem value="high">High</MenuItem>
+                <MenuItem value="medium">Medium</MenuItem>
+                <MenuItem value="low">Low</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              fullWidth
+              type="date"
+              value={filters.dueDate || ""}
+              onChange={(e) => setFilters({...filters, dueDate: e.target.value})}
+              label="Due Date"
+            />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              fullWidth
+              value={filters.assignedTo || ""}
+              onChange={(e) => setFilters({...filters, assignedTo: e.target.value})}
+              label="Assigned To"
+            />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <FormControl fullWidth>
+              <InputLabel>Sort By</InputLabel>
+              <Select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                label="Sort By"
+              >
+                <MenuItem value="dueDate">Due Date</MenuItem>
+                <MenuItem value="priority">Priority</MenuItem>
+                <MenuItem value="status">Status</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <TextField
+              fullWidth
+              value={filterName}
+              onChange={(e) => setFilterName(e.target.value)}
+              label="Filter Name"
+            />
+          </Grid>
+          <Grid item xs={12} sm={3}>
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              onClick={saveCurrentFilter}
             >
-              {filter.name}
-            </button>
-          ))}
-        </div>
-      </div>
+              Save Filter
+            </Button>
+          </Grid>
+          <Grid item xs={12}>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {savedFilters.map((filter, index) => (
+                <Chip
+                  key={index}
+                  label={filter.name}
+                  onClick={() => loadSavedFilter(filter)}
+                  color="primary"
+                  variant="outlined"
+                />
+              ))}
+            </Box>
+          </Grid>
+        </Grid>
+      </Paper>
 
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex flex-col md:flex-row gap-6">
+        <Grid container spacing={3}>
           {['current', 'pending', 'completed'].map((status) => (
-            <Droppable droppableId={status} key={status}>
-              {(provided) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  className="flex-1 p-4 bg-gray-100 rounded-lg shadow-md"
-                >
-                  <h2 className="text-xl font-bold mb-4 capitalize text-gray-700">{status}</h2>
-                  {filteredAndSortedTasks.filter(todo => todo.Status === status).map((todo, index) => (
-                    <Draggable key={todo._id} draggableId={todo._id.toString()} index={index}>
-                      {(provided) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className="bg-white p-3 mb-3 rounded-lg shadow-sm hover:shadow-md transition duration-300 ease-in-out"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              {status !== 'current' && (
-                                <input
-                                  type="checkbox"
-                                  checked={status === 'completed'}
-                                  onChange={() => changeStatus(todo._id, status, status === 'pending' ? 'completed' : 'pending')}
-                                  className="mr-3 h-5 w-5 text-blue-500"
-                                />
-                              )}
-                              <span className={`${status === 'completed' ? "line-through text-gray-500" : "text-gray-700"} text-lg`}>
-                                {todo.Task}
-                              </span>
-                            </div>
-                            <div className="flex space-x-2">
-                              {status === 'current' && (
-                                <>
-                                  <button
-                                    onClick={() => changeStatus(todo._id, 'current', 'pending')}
-                                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded-full text-sm transition duration-300 ease-in-out"
-                                  >
-                                    Start
-                                  </button>
-                                  <button
-                                    onClick={() => handleEdit(todo)}
-                                    className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded-full text-sm transition duration-300 ease-in-out"
-                                  >
-                                    Edit
-                                  </button>
-                                </>
-                              )}
-                              <button
-                                onClick={() => deleteTodo(todo._id, status)}
-                                className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full text-sm transition duration-300 ease-in-out"
+            <Grid item xs={12} md={4} key={status}>
+              <Droppable droppableId={status}>
+                {(provided) => (
+                  <Paper
+                    {...provided.droppableProps}
+                    ref={provided.innerRef}
+                    elevation={3}
+                    sx={{ padding: 2, height: '100%' }}
+                  >
+                    <Typography variant="h6" gutterBottom>{status.charAt(0).toUpperCase() + status.slice(1)}</Typography>
+                    {filteredAndSortedTasks.filter(todo => todo.Status === status).map((todo, index) => (
+                      <Draggable key={todo._id} draggableId={todo._id.toString()} index={index}>
+                        {(provided) => (
+                          <Paper
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            elevation={2}
+                            sx={{
+                              padding: 2,
+                              marginBottom: 2,
+                              backgroundColor: theme.palette.background.default,
+                              '&:hover': {
+                                backgroundColor: theme.palette.action.hover,
+                              },
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Typography variant="subtitle1">{todo.Task}</Typography>
+                              <Box>
+                                {status === 'current' && (
+                                  <>
+                                    <IconButton onClick={() => changeStatus(todo._id, 'current', 'pending')} size="small">
+                                      <StartIcon />
+                                    </IconButton>
+                                    <IconButton onClick={() => handleEdit(todo)} size="small">
+                                      <EditIcon />
+                                    </IconButton>
+                                  </>
+                                )}
+                                <IconButton onClick={() => deleteTodo(todo._id, status)} size="small">
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Box>
+                            </Box>
+                            <Typography variant="body2" color="textSecondary">
+                              Due: {todo.DueDate || 'Not set'}
+                            </Typography>
+                            <Typography variant="body2" color="textSecondary">
+                              Priority: {todo.Priority || 'Not set'}
+                            </Typography>
+                            <Typography variant="body2" color="textSecondary">
+                              Assigned to: {users?.find(user => user._id === todo.AssignedTo)?.Name || 'Not assigned'}
+                            </Typography>
+                            {isAdmin && (
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                onClick={() => assignTask(todo._id)}
+                                sx={{ marginTop: 1 }}
                               >
-                                Delete
-                              </button>
-                            </div>
-                          </div>
-                          <div className="mt-2 text-sm text-gray-600">
-                            <p>Due: {todo.DueDate || 'Not set'}</p>
-                            <p>Priority: {todo.Priority || 'Not set'}</p>
-                            <p>Assigned to: {users?.find(user => user._id === todo.AssignedTo)?.Name || 'Not assigned'}</p>
-                          </div>
-                          {isAdmin && (
-                            <button
-                              onClick={() => assignTask(todo._id)}
-                              className="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1 rounded-full text-sm transition duration-300 ease-in-out mt-2"
-                            >
-                              Assign Task
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
+                                Assign Task
+                              </Button>
+                            )}
+                          </Paper>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </Paper>
+                )}
+              </Droppable>
+            </Grid>
           ))}
-        </div>
+        </Grid>
       </DragDropContext>
-    </div>
+    </Box>
   );
 }
 

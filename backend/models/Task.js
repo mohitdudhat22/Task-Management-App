@@ -28,12 +28,12 @@ const Task = mongoose.Schema({
     },
     AssignedTo: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',  // The admin or user who created/assigned the task
+        ref: 'User', 
         required: false
     },
     IsAssignedByAdmin: {
         type: Boolean,
-        default: false , // True if assigned by admin, false if by user
+        default: false,
         required : false
     }
 },{timestamps: true});

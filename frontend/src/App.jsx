@@ -1,23 +1,37 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import './App.css'
-import Todo from './Todo'
-import Login from './Login'
-import Registration from './Registration'
+import { Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from '@mui/material/styles';
+import Login from './Login';
+import Registration from './Registration';
+import { lightTheme, darkTheme } from './theme';
+import './App.css';
+import DashboardLayoutNavigationLinks from './Dashboard';
+import Layout from './Layout';
+import { useState } from 'react';
 
 function App() {
+  const [darkMode, setDarkMode] = useState(false);
+
+  const toggleTheme = () => {
+    setDarkMode(!darkMode);
+  };
 
   return (
-    <>
-      <BrowserRouter>
-      <Routes  path="/">
-        <Route index element={<Login />} />
-        <Route path="register" element={<Registration />} />
-        <Route path="dashboard" element={<Todo />} />
+    <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
+        <Routes >
+          <Route path="/" element={<Login />} />
+          <Route path="register" element={<Registration />} />
+          <Route
+            path="*"
+            element={
+              <Layout toggleDarkMode={toggleTheme} darkMode={darkMode}>
+              <DashboardLayoutNavigationLinks toggleTheme={toggleTheme} />
+            </Layout>
+          }
+        /> 
+         </Routes>    
 
-      </Routes>
-      </BrowserRouter>
-    </>
-  )
+    </ThemeProvider>
+  );
 }
 
-export default App
+export default App;
