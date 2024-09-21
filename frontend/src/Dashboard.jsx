@@ -9,6 +9,7 @@ import { DashboardLayout } from '@toolpad/core/DashboardLayout';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Todo from './Todo';
 import Tasks from './Tasks';
+import { useTheme } from '@mui/material/styles';
 
 // Create a theme for the app
 const demoTheme = createTheme({
@@ -29,30 +30,34 @@ const demoTheme = createTheme({
 
 // Component for demo page content
 function DemoPageContent({ pathname }) {
-    console.log(pathname)
-    const renderContent = () => {
-        switch (pathname) {
+  const theme = useTheme();
+  console.log(pathname);
+  
+  const renderContent = () => {
+    switch (pathname) {
+      case '/dashboard/tasks':
+        return <Tasks />;
+      case '/dashboard/todo':
+        return <Todo />;
+      default:
+        return <Typography>Dashboard content for {pathname}</Typography>;
+    }
+  };
 
-          case '/dashboard/tasks':
-            return <Tasks/>;
-          case '/dashboard/todo':
-            return <Todo />;
-          default:
-            return <Typography>Dashboard content for {pathname}</Typography>;
-        }
-      };
-    
-      return (
-        <Box
-          sx={{
-            py: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textAlign: 'center'
-          }}
-        >
-          {renderContent()}  
+  return (
+    <Box
+      sx={{
+        py: 4,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        textAlign: 'center',
+        bgcolor: 'background.default',
+        color: 'text.primary',
+        minHeight: '100vh',
+      }}
+    >
+      {renderContent()}  
     </Box>
   );
 }
