@@ -22,8 +22,8 @@ app.use(express.json());
 
 
 const allowedOrigins = [
-    "https://task-management-app-xi-six.vercel.app",
-    "http://localhost:5173",
+        "https://task-management-app-xi-six.vercel.app",
+        "http://localhost:5173",
   ];
 
   
