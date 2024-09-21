@@ -65,8 +65,7 @@ function Tasks() {
   };
 
   const filteredAndSortedTasks = useMemo(() => {
-    let filteredTasks = Object.values(todos).flat();
-    
+    let filteredTasks = [...todos.current, ...todos.pending, ...todos.completed];
     Object.entries(filters).forEach(([key, value]) => {
       if (value) {
         filteredTasks = filteredTasks.filter(task => {
@@ -77,9 +76,11 @@ function Tasks() {
               return task.Priority.toLowerCase() === value.toLowerCase();
             case 'DueDate':
               if (!task.DueDate) return false;
-              let taskDate = new Date(task.DueDate);
-              let filterDate = new Date(value);
-              return taskDate.toDateString() === filterDate.toDateString();
+              {
+                let taskDate = new Date(task.DueDate);
+                let filterDate = new Date(value);
+                return taskDate.toDateString() === filterDate.toDateString();
+              }
             case 'AssignedTo':
               return task.AssignedTo === value;
             default:
@@ -90,11 +91,11 @@ function Tasks() {
     });
 
     filteredTasks.sort((a, b) => {
+      const priorityOrder = { high: 3, medium: 2, low: 1 };
       switch (sortBy) {
         case 'DueDate':
           return new Date(a.DueDate || '9999-12-31') - new Date(b.DueDate || '9999-12-31');
         case 'Priority':
-          const priorityOrder = { high: 3, medium: 2, low: 1 };
           return priorityOrder[b.Priority.toLowerCase()] - priorityOrder[a.Priority.toLowerCase()];
         case 'Status':
           return a.Status.localeCompare(b.Status);

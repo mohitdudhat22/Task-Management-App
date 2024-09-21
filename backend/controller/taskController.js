@@ -46,10 +46,10 @@ const getTasks = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        if(req.user.role === 'admin'){
-            const tasks = await TaskModel.find({ AssignedBy: userId });
-            return res.status(200).json(tasks);
-        }
+        // if(req.user.role === 'admin'){
+        //     const tasks = await TaskModel.find({ AssignedBy: userId });
+        //     return res.status(200).json(tasks);
+        // }
         
         const tasks = await TaskModel.find({ AssignedTo: userId });
         return res.status(200).json(tasks);
