@@ -6,10 +6,36 @@ import axios from "axios";
 import { useTodoContext } from "./Context/TodoContext";
 import {
   TextField, Button, Select, MenuItem, FormControl, InputLabel,
-  Grid, Paper, Box
+  Grid, Paper, Box, Typography, Switch, FormControlLabel
 } from '@mui/material';
+import { styled } from '@mui/material/styles';
 
 const API_URL = import.meta.env.VITE_API_URL;
+
+// Custom styled components
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: theme.spacing(4),
+  marginBottom: theme.spacing(4),
+  borderRadius: theme.shape.borderRadius * 2,
+  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+}));
+
+const StyledButton = styled(Button)(({ theme }) => ({
+  borderRadius: theme.shape.borderRadius * 2,
+  padding: theme.spacing(1.5, 3),
+  textTransform: 'none',
+  fontWeight: 600,
+}));
+
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    borderRadius: theme.shape.borderRadius * 2,
+  },
+}));
+
+const StyledSelect = styled(Select)(({ theme }) => ({
+  borderRadius: theme.shape.borderRadius * 2,
+}));
 
 function Todo() {
   const {
@@ -205,21 +231,25 @@ function Todo() {
 
   return (
     <Box sx={{ maxWidth: 1200, margin: 'auto', padding: 4 }}>
-      <Paper elevation={3} sx={{ padding: 3, marginBottom: 4 }}>
+      <StyledPaper elevation={3}>
+        <Typography variant="h4" gutterBottom>
+          {isEditing ? "Edit Task" : "Add New Task"}
+        </Typography>
         <form onSubmit={(e) => e.preventDefault()}>
-          <Grid container spacing={2}>
+          <Grid container spacing={3}>
             <Grid item xs={12}>
-              <TextField
+              <StyledTextField
                 fullWidth
                 label="Task Title"
                 name="Title"
                 value={todo.Title}
                 onChange={handleInputChange}
                 required
+                variant="outlined"
               />
             </Grid>
             <Grid item xs={12}>
-              <TextField
+              <StyledTextField
                 fullWidth
                 multiline
                 rows={3}
@@ -227,12 +257,13 @@ function Todo() {
                 name="Description"
                 value={todo.Description}
                 onChange={handleInputChange}
+                variant="outlined"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
+              <FormControl fullWidth variant="outlined">
                 <InputLabel>Status</InputLabel>
-                <Select
+                <StyledSelect
                   name="Status"
                   value={todo.Status}
                   onChange={handleInputChange}
@@ -241,11 +272,11 @@ function Todo() {
                   <MenuItem value="current">Current</MenuItem>
                   <MenuItem value="pending">Pending</MenuItem>
                   <MenuItem value="completed">Completed</MenuItem>
-                </Select>
+                </StyledSelect>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
+              <StyledTextField
                 fullWidth
                 type="datetime-local"
                 label="Due Date"
@@ -253,12 +284,13 @@ function Todo() {
                 value={todo.DueDate}
                 onChange={handleInputChange}
                 InputLabelProps={{ shrink: true }}
+                variant="outlined"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
+              <FormControl fullWidth variant="outlined">
                 <InputLabel>Priority</InputLabel>
-                <Select
+                <StyledSelect
                   name="Priority"
                   value={todo.Priority}
                   onChange={handleInputChange}
@@ -267,13 +299,13 @@ function Todo() {
                   <MenuItem value="low">Low</MenuItem>
                   <MenuItem value="medium">Medium</MenuItem>
                   <MenuItem value="high">High</MenuItem>
-                </Select>
+                </StyledSelect>
               </FormControl>
             </Grid>
             <Grid item xs={12} sm={6}>
-              <FormControl fullWidth>
+              <FormControl fullWidth variant="outlined">
                 <InputLabel>Assigned To</InputLabel>
-                <Select
+                <StyledSelect
                   name="AssignedTo"
                   value={todo.AssignedTo}
                   onChange={handleInputChange}
@@ -283,25 +315,26 @@ function Todo() {
                   {users?.map(user => (
                     <MenuItem key={user._id} value={user._id}>{user.Name}</MenuItem>
                   ))}
-                </Select>
+                </StyledSelect>
               </FormControl>
             </Grid>
             <Grid item xs={12}>
-              <Button
+              <StyledButton
                 fullWidth
                 variant="contained"
                 color="primary"
                 onClick={handleAddOrUpdateTodo}
+                size="large"
               >
                 {isEditing ? "Update Task" : "Add Task"}
-              </Button>
+              </StyledButton>
             </Grid>
           </Grid>
         </form>
-      </Paper>
+      </StyledPaper>
 
       <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 2 }}>
-        <Button
+        <StyledButton
           variant="contained"
           color="success"
           component={CSVLink}
@@ -309,7 +342,7 @@ function Todo() {
           filename={"tasks.csv"}
         >
           Export CSV
-        </Button>
+        </StyledButton>
         <input
           type="file"
           accept=".csv"
@@ -318,9 +351,9 @@ function Todo() {
           id="csvInput"
         />
         <label htmlFor="csvInput">
-          <Button variant="contained" component="span" onClick={()=>alert("Importing CSV it needs ISO DATE")}>
+          <StyledButton variant="contained" component="span" color="secondary">
             Import CSV
-          </Button>
+          </StyledButton>
         </label>
       </Box>
     </Box>
