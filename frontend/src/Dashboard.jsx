@@ -1,43 +1,115 @@
-import TodoIcon from '@mui/icons-material/Description';
+import * as React from 'react';
+import PropTypes from 'prop-types';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import { createTheme } from '@mui/material/styles';
+import DescriptionIcon from '@mui/icons-material/Description';
 import { AppProvider } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { demoTheme } from './config';
+import { useNavigate } from 'react-router-dom';
 import Todo from './Todo';
-import { useMemo } from 'react';
+import Tasks from './Tasks';
 
-function Dashboard() {
-    const navigate = useNavigate();
-    const location = useLocation();
-  
-    const router = useMemo(() => {
-      return {
-        pathname: location.pathname,
-        searchParams: new URLSearchParams(location.search),
-        navigate: (path) => navigate(path),
+// Create a theme for the app
+const demoTheme = createTheme({
+  cssVariables: {
+    colorSchemeSelector: 'data-toolpad-color-scheme',
+  },
+  colorSchemes: { light: true, dark: true },
+  breakpoints: {
+    values: {
+      xs: 0,
+      sm: 600,
+      md: 600,
+      lg: 1200,
+      xl: 1536,
+    },
+  },
+});
+
+// Component for demo page content
+function DemoPageContent({ pathname }) {
+    console.log(pathname)
+    const renderContent = () => {
+        switch (pathname) {
+
+          case '/tasks':
+            return <Tasks/>;
+          case '/todo':
+            return <Todo />;
+          default:
+            return <Typography>Dashboard content for {pathname}</Typography>;
+        }
       };
-    }, [location, navigate]);
-  
-    return (
-      <AppProvider
-        title="Dashboard"
-        navigation={[
-          {
-            segment: 'todo',
-            title: 'Todo',
-            icon: <TodoIcon />,
-          }
-        ]}
-        router={router}
-        theme={demoTheme}
-      >
-        <DashboardLayout>
-          <Routes>
-            <Route path="todo" element={<Todo />} />
-          </Routes>
-        </DashboardLayout>
-      </AppProvider>
-    );
-  }
-  
-  export default Dashboard;
+    
+      return (
+        <Box
+          sx={{
+            py: 4,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+          }}
+        >
+          {renderContent()}  
+    </Box>
+  );
+}
+
+DemoPageContent.propTypes = {
+  pathname: PropTypes.string.isRequired,
+};
+
+// Main component for dashboard layout with navigation links
+function DashboardLayoutNavigationLinks(props) {
+  const { window } = props;
+
+  const [pathname, setPathname] = React.useState('/home');
+  const navigate = useNavigate();
+
+  const router = React.useMemo(() => {
+    return {
+      pathname,
+      searchParams: new URLSearchParams(),
+      navigate: (path) => {
+        setPathname(path);
+        navigate(path); // This will change the URL
+      },
+    };
+  }, [pathname, navigate]);
+
+  // Demo window
+  const demoWindow = window !== undefined ? window() : undefined;
+
+  return (
+    <AppProvider
+      navigation={[
+        {
+          segment: 'tasks',
+          title: 'Tasks',
+          icon: <DescriptionIcon />,
+
+        },
+        {
+          segment: 'todo',
+          title: 'Todo',
+          icon: <DescriptionIcon />,
+        },
+      ]}
+      router={router}
+      theme={demoTheme}
+      window={demoWindow}
+    >
+      <DashboardLayout>
+        <DemoPageContent pathname={pathname} />
+      </DashboardLayout>
+    </AppProvider>
+  );
+}
+
+DashboardLayoutNavigationLinks.propTypes = {
+  window: PropTypes.func,
+};
+
+export default DashboardLayoutNavigationLinks;

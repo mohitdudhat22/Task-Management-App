@@ -1,9 +1,10 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
 import io from 'socket.io-client';
 import { toast } from 'react-hot-toast';
 import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
+import { getAuthHeaders, fetchTasks, fetchUsers, checkAdminStatus } from './apiUtils';
+import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const socket = io(API_URL);
@@ -19,11 +20,15 @@ export const TodoProvider = ({ children }) => {
   const [savedFilters, setSavedFilters] = useState([]);
   const [users, setUsers] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedUser, setSelectedUser] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [filterName, setFilterName] = useState("");
 
   useEffect(() => {
-    fetchTasks();
-    fetchUsers();
-    checkAdminStatus();
+    fetchTasks(setTodos);
+    fetchUsers(setUsers);
+    checkAdminStatus(setIsAdmin);
 
     socket.on('update-task-list', handleSocketUpdate);
     socket.on('add-new-task', handleNewTask);
@@ -36,40 +41,6 @@ export const TodoProvider = ({ children }) => {
     };
   }, []);
 
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return token ? { headers: { Authorization: `Bearer ${token}`} } : {};
-  };
-
-  const fetchTasks = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/get`, getAuthHeaders());
-      const tasks = response.data;
-      setTodos({
-        current: tasks.filter(task => task.Status === 'current'),
-        pending: tasks.filter(task => task.Status === 'pending'),
-        completed: tasks.filter(task => task.Status === 'completed')
-      });
-    } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to fetch tasks");
-      console.error(error);
-    }
-  };
-
-  const fetchUsers = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/api/getAllUsers`, getAuthHeaders());
-      setUsers(response.data.users);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    }
-  };
-
-  const checkAdminStatus = () => {
-    const user = JSON.parse(localStorage.getItem('user'));
-    setIsAdmin(user && user.role === 'admin');
-  };
-
   const handleSocketUpdate = (updatedTask) => {
     setTodos(prev => ({
       ...prev,
@@ -77,13 +48,13 @@ export const TodoProvider = ({ children }) => {
         task._id === updatedTask._id ? updatedTask : task
       ) || []
     }));
-    fetchTasks();
+    fetchTasks(setTodos);
   };
 
   const handleNewTask = (newTask) => {
     setTodos(prev => {
       const status = newTask.status || 'current';
-      fetchTasks();
+      fetchTasks(setTodos);
       return {
         ...prev,
         [status]: Array.isArray(prev[status]) 
@@ -144,7 +115,7 @@ export const TodoProvider = ({ children }) => {
         completed: prev.completed.map(item => item._id === id ? response.data : item)
       }));
       toast.success("Todo updated successfully!");
-      fetchTasks();
+      fetchTasks(setTodos);
     } catch (error) {
       toast.error("Failed to update todo");
       console.error(error);
@@ -165,7 +136,7 @@ export const TodoProvider = ({ children }) => {
         [newStatus]: [...prev[newStatus], response.data]
       }));
       toast.success(`Todo moved to ${newStatus}!`);
-      fetchTasks();
+      fetchTasks(setTodos);
     } catch (error) {
       toast.error("Failed to update todo status");
       console.error(error);
@@ -180,7 +151,7 @@ export const TodoProvider = ({ children }) => {
       }, getAuthHeaders());
       console.log(response.data);
       toast.success("Task assigned successfully");
-      fetchTasks();
+      fetchTasks(setTodos);
 
     } catch (error) {
       toast.error("Failed to assign task: " + (error.response?.data?.message || error.message));
@@ -204,12 +175,48 @@ export const TodoProvider = ({ children }) => {
   };
 
   const bulkCreateTasks = async (tasks) => {
+      console.log(tasks)
     try {
       const response = await axios.post(`${API_URL}/api/bulk-create`, tasks, getAuthHeaders());
       toast.success(`Created ${response.data.length} tasks successfully!`);
-      fetchTasks();
+      fetchTasks(setTodos);
     } catch (error) {
       toast.error("Failed to create tasks: " + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const onDragEnd = async (result) => {
+    const { source, destination } = result;
+
+    if (!destination) return;
+
+    if (
+      source.droppableId === destination.droppableId &&
+      source.index === destination.index
+    ) {
+      return;
+    }
+
+    const sourceStatus = source.droppableId;
+    const destStatus = destination.droppableId;
+
+    const newTodos = { ...todos };
+    const [movedTask] = newTodos[sourceStatus].splice(source.index, 1);
+    newTodos[destStatus].splice(destination.index, 0, movedTask);
+
+    setTodos(newTodos);
+
+    if (sourceStatus !== destStatus) {
+      try {
+        await axios.put(`${API_URL}/api/edit/${movedTask._id}`, {
+          status: destStatus
+        }, getAuthHeaders());
+        toast.success("Task status updated successfully!");
+      } catch (error) {
+        toast.error("Failed to update task status");
+        console.error(error);
+        fetchTasks(setTodos);
+      }
     }
   };
 
@@ -224,7 +231,7 @@ export const TodoProvider = ({ children }) => {
     setSavedFilters,
     users,
     isAdmin,
-    fetchTasks,
+    fetchTasks: () => fetchTasks(setTodos),
     addTodo,
     deleteTodo,
     updateTodo,
@@ -234,12 +241,21 @@ export const TodoProvider = ({ children }) => {
     saveFilter,
     deleteFilter,
     applyFilter,
-    bulkCreateTasks
+    bulkCreateTasks,
+    onDragEnd,
+    selectedUser, 
+    setSelectedUser,
+    isEditing,
+    setIsEditing,
+    editId,
+    setEditId,
+    filterName,
+    setFilterName
   };
 
   return <TodoContext.Provider value={value}>{children}</TodoContext.Provider>;
 };
 
 TodoProvider.propTypes = {
-    children: PropTypes.node.isRequired,
+  children: PropTypes.node.isRequired,
 };

@@ -1,5 +1,4 @@
-import { useState, useMemo } from "react";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { CSVLink } from "react-csv";
 import Papa from 'papaparse';
@@ -7,34 +6,25 @@ import axios from "axios";
 import { useTodoContext } from "./Context/TodoContext";
 import {
   TextField, Button, Select, MenuItem, FormControl, InputLabel,
-  Grid, Paper, Typography, IconButton, Box, Chip
+  Grid, Paper, Box
 } from '@mui/material';
-import { Delete as DeleteIcon, Edit as EditIcon, PlayArrow as StartIcon } from '@mui/icons-material';
-import { useTheme } from '@mui/material/styles';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 function Todo() {
-  const theme = useTheme();
   const {
     todos,
-    setTodos,
-    validateTask,
-    filters,
-    setFilters,
-    sortBy,
-    setSortBy,
-    savedFilters,
-    setSavedFilters,
     users,
-    isAdmin,
     fetchTasks,
     addTodo,
-    deleteTodo,
     updateTodo,
-    changeStatus,
-    getAuthHeaders
+    getAuthHeaders,
+    isEditing,
+    setIsEditing,
+    editId,
+    setEditId,
   } = useTodoContext();
+
 
   const [todo, setTodo] = useState({
     Title: "",
@@ -44,10 +34,7 @@ function Todo() {
     Priority: "medium",
     AssignedTo: ""
   });
-  const [isEditing, setIsEditing] = useState(false);
-  const [editId, setEditId] = useState(null);
-  const [filterName, setFilterName] = useState("");
-  const [selectedUser] = useState("");
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -81,78 +68,7 @@ function Todo() {
     });
   };
 
-  const handleEdit = (task) => {
-    setIsEditing(true);
-    setEditId(task._id);
-    setTodo({
-      Title: task.Task,
-      Description: task.Description,
-      Status: task.Status,
-      DueDate: task.DueDate ? task.DueDate.slice(0, 16) : '',
-      Priority: task.Priority,
-      AssignedTo: task.AssignedTo
-    });
-  };
 
-  const assignTask = async (taskId) => {
-    if (!selectedUser) {
-      toast.error("Please select a user to assign the task");
-      return;
-    }
-
-    try {
-      const response = await axios.post(`${API_URL}/api/assign-task`, {
-        taskId,
-        userId: selectedUser
-      }, getAuthHeaders());
-      console.log(response.data);
-      toast.success("Task assigned successfully");
-      fetchTasks();
-    } catch (error) {
-      toast.error("Failed to assign task: " + (error.response?.data?.message || error.message));
-    }
-  };
-
-  const filteredAndSortedTasks = useMemo(() => {
-    let filteredTasks = Object.values(todos).flat();
-    
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
-        filteredTasks = filteredTasks.filter(task => {
-          if (key === 'dueDate') {
-            const taskDate = new Date(task[key]);
-            const filterDate = new Date(value);
-            return taskDate.toDateString() === filterDate.toDateString();
-          }
-          return task[key] === value;
-        });
-      }
-    });
-
-    filteredTasks.sort((a, b) => {
-      if (sortBy === 'dueDate') {
-        return new Date(a[sortBy]) - new Date(b[sortBy]);
-      }
-      return a[sortBy] > b[sortBy] ? 1 : -1;
-    });
-
-    return filteredTasks;
-  }, [todos, filters, sortBy]);
-
-  const saveCurrentFilter = () => {
-    if (filterName.trim() === "") {
-      toast.error("Please enter a name for the filter");
-      return;
-    }
-    setSavedFilters([...savedFilters, { name: filterName, filters: { ...filters } }]);
-    setFilterName("");
-    toast.success("Filter saved successfully!");
-  };
-
-  const loadSavedFilter = (savedFilter) => {
-    setFilters(savedFilter.filters);
-    toast.success(`Filter "${savedFilter.name}" applied`);
-  };
 
   const prepareCSVData = () => {
     return Object.values(todos).flat().map(task => ({
@@ -166,6 +82,7 @@ function Todo() {
   };
 
   const handleCSVImport = (event) => {
+    console.log("Importing CSV");
     const file = event.target.files[0];
     if (file) {
       if (file.size > 1024 * 1024) {
@@ -232,40 +149,52 @@ function Todo() {
       });
     }
   };
+  const validateTask = (task) => {
+    const errors = [];
+    const requiredFields = ['Title', 'Status'];
+    const validStatuses = ['current', 'pending', 'completed'];
 
-  const onDragEnd = async (result) => {
-    const { source, destination } = result;
-
-    if (!destination) return;
-
-    if (
-      source.droppableId === destination.droppableId &&
-      source.index === destination.index
-    ) {
-      return;
-    }
-
-    const sourceStatus = source.droppableId;
-    const destStatus = destination.droppableId;
-
-    const newTodos = { ...todos };
-    const [movedTask] = newTodos[sourceStatus].splice(source.index, 1);
-    newTodos[destStatus].splice(destination.index, 0, movedTask);
-
-    setTodos(newTodos);
-
-    if (sourceStatus !== destStatus) {
-      try {
-        await axios.put(`${API_URL}/api/edit/${movedTask._id}`, {
-          status: destStatus
-        }, getAuthHeaders());
-        toast.success("Task status updated successfully!");
-      } catch (error) {
-        toast.error("Failed to update task status");
-        console.error(error);
-        fetchTasks();
+    requiredFields.forEach(field => {
+      if (!task[field] || task[field].trim() === '') {
+        errors.push(`Missing required field: ${field}`);
       }
+    });
+
+    if (task.Status && !validStatuses.includes(task.Status.toLowerCase())) {
+      errors.push(`Invalid Status: ${task.Status}. Must be 'current', 'pending', or 'completed'`);
     }
+
+    // if (task.DueDate) {
+    //   const [day, month, year] = task.DueDate.split('-').map(Number);
+    //   const dueDate = new Date(year, month - 1, day);
+    //   const today = new Date();
+    //   today.setHours(0, 0, 0, 0);
+
+    //   if (isNaN(dueDate.getTime())) {
+    //     errors.push(`Invalid date format for DueDate: ${task.DueDate}. Expected format: DD-MM-YYYY`);
+    //   } else if (dueDate < today) {
+    //     errors.push(`DueDate cannot be in the past: ${task.DueDate}`);
+    //   }
+    // }
+
+    const existingTask = Object.values(todos).flat().find(t => t.Task === task.Title);
+    if (existingTask) {
+      errors.push(`Duplicate task: ${task.Title}`);
+    }
+
+    if (task.Description && typeof task.Description !== 'string') {
+      errors.push('Description must be a string');
+    }
+
+    if (task.AssignedBy && typeof task.AssignedBy !== 'string') {
+      errors.push('AssignedBy must be a string');
+    }
+
+    if (task.IsAssignedByAdmin !== undefined && typeof task.IsAssignedByAdmin !== 'boolean') {
+      errors.push('IsAssignedByAdmin must be a boolean');
+    }
+
+    return errors;
   };
 
   return (
@@ -383,188 +312,11 @@ function Todo() {
           id="csvInput"
         />
         <label htmlFor="csvInput">
-          <Button variant="contained" component="span">
+          <Button variant="contained" component="span" onClick={()=>alert("Importing CSV it needs ISO DATE")}>
             Import CSV
           </Button>
         </label>
       </Box>
-
-      <Paper elevation={2} sx={{ padding: 2, marginBottom: 4 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={12} sm={3}>
-            <FormControl fullWidth>
-              <InputLabel>Status</InputLabel>
-              <Select
-                value={filters.status || ""}
-                onChange={(e) => setFilters({...filters, status: e.target.value})}
-                label="Status"
-              >
-                <MenuItem value="">All Statuses</MenuItem>
-                <MenuItem value="current">Current</MenuItem>
-                <MenuItem value="pending">Pending</MenuItem>
-                <MenuItem value="completed">Completed</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <FormControl fullWidth>
-              <InputLabel>Priority</InputLabel>
-              <Select
-                value={filters.priority || ""}
-                onChange={(e) => setFilters({...filters, priority: e.target.value})}
-                label="Priority"
-              >
-                <MenuItem value="">All Priorities</MenuItem>
-                <MenuItem value="high">High</MenuItem>
-                <MenuItem value="medium">Medium</MenuItem>
-                <MenuItem value="low">Low</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <TextField
-              fullWidth
-              type="date"
-              value={filters.dueDate || ""}
-              onChange={(e) => setFilters({...filters, dueDate: e.target.value})}
-              label="Due Date"
-            />
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <TextField
-              fullWidth
-              value={filters.assignedTo || ""}
-              onChange={(e) => setFilters({...filters, assignedTo: e.target.value})}
-              label="Assigned To"
-            />
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <FormControl fullWidth>
-              <InputLabel>Sort By</InputLabel>
-              <Select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                label="Sort By"
-              >
-                <MenuItem value="dueDate">Due Date</MenuItem>
-                <MenuItem value="priority">Priority</MenuItem>
-                <MenuItem value="status">Status</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <TextField
-              fullWidth
-              value={filterName}
-              onChange={(e) => setFilterName(e.target.value)}
-              label="Filter Name"
-            />
-          </Grid>
-          <Grid item xs={12} sm={3}>
-            <Button
-              fullWidth
-              variant="contained"
-              color="primary"
-              onClick={saveCurrentFilter}
-            >
-              Save Filter
-            </Button>
-          </Grid>
-          <Grid item xs={12}>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {savedFilters.map((filter, index) => (
-                <Chip
-                  key={index}
-                  label={filter.name}
-                  onClick={() => loadSavedFilter(filter)}
-                  color="primary"
-                  variant="outlined"
-                />
-              ))}
-            </Box>
-          </Grid>
-        </Grid>
-      </Paper>
-
-      <DragDropContext onDragEnd={onDragEnd}>
-        <Grid container spacing={3}>
-          {['current', 'pending', 'completed'].map((status) => (
-            <Grid item xs={12} md={4} key={status}>
-              <Droppable droppableId={status}>
-                {(provided) => (
-                  <Paper
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    elevation={3}
-                    sx={{ padding: 2, height: '100%' }}
-                  >
-                    <Typography variant="h6" gutterBottom>{status.charAt(0).toUpperCase() + status.slice(1)}</Typography>
-                    {filteredAndSortedTasks.filter(todo => todo.Status === status).map((todo, index) => (
-                      <Draggable key={todo._id} draggableId={todo._id.toString()} index={index}>
-                        {(provided) => (
-                          <Paper
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            elevation={2}
-                            sx={{
-                              padding: 2,
-                              marginBottom: 2,
-                              backgroundColor: theme.palette.background.default,
-                              '&:hover': {
-                                backgroundColor: theme.palette.action.hover,
-                              },
-                            }}
-                          >
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <Typography variant="subtitle1">{todo.Task}</Typography>
-                              <Box>
-                                {status === 'current' && (
-                                  <>
-                                    <IconButton onClick={() => changeStatus(todo._id, 'current', 'pending')} size="small">
-                                      <StartIcon />
-                                    </IconButton>
-                                    <IconButton onClick={() => handleEdit(todo)} size="small">
-                                      <EditIcon />
-                                    </IconButton>
-                                  </>
-                                )}
-                                <IconButton onClick={() => deleteTodo(todo._id, status)} size="small">
-                                  <DeleteIcon />
-                                </IconButton>
-                              </Box>
-                            </Box>
-                            <Typography variant="body2" color="textSecondary">
-                              Due: {todo.DueDate || 'Not set'}
-                            </Typography>
-                            <Typography variant="body2" color="textSecondary">
-                              Priority: {todo.Priority || 'Not set'}
-                            </Typography>
-                            <Typography variant="body2" color="textSecondary">
-                              Assigned to: {users?.find(user => user._id === todo.AssignedTo)?.Name || 'Not assigned'}
-                            </Typography>
-                            {isAdmin && (
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={() => assignTask(todo._id)}
-                                sx={{ marginTop: 1 }}
-                              >
-                                Assign Task
-                              </Button>
-                            )}
-                          </Paper>
-                        )}
-                      </Draggable>
-                    ))}
-                    {provided.placeholder}
-                  </Paper>
-                )}
-              </Droppable>
-            </Grid>
-          ))}
-        </Grid>
-      </DragDropContext>
     </Box>
   );
 }

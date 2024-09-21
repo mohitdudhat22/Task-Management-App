@@ -83,7 +83,7 @@ function Registration() {
       isValid = false;
     }
 
-    if (!formData.password || formData.password.length < 6) {
+    if (!formData.password || formData.password.length < 0) {
       newErrors.password = 'Password must be at least 6 characters long';
       isValid = false;
     }
@@ -117,7 +117,7 @@ function Registration() {
         Role: formData.role,
       });
       console.log('Registration successful:', response.data);
-      navigate('/login');
+      navigate('/');
     } catch (error) {
       console.error('Registration failed:', error);
       // Handle registration error (e.g., show error message)
