@@ -37,8 +37,16 @@ function Tasks() {
       toast.error("Please enter a name for the filter");
       return;
     }
-    setSavedFilters([...savedFilters, { name: filterName, filters: { ...filters } }]);
+    setSavedFilters([...savedFilters, { name: filterName, filters: { ...filters }, sortBy }]);
+    // Reset all form fields
     setFilterName("");
+    setFilters({
+      Status: "",
+      Priority: "",
+      DueDate: "",
+      AssignedTo: ""
+    });
+    setSortBy("DueDate"); // Or whatever your default sort is
     toast.success("Filter saved successfully!");
   };
 
@@ -53,21 +61,37 @@ function Tasks() {
     Object.entries(filters).forEach(([key, value]) => {
       if (value) {
         filteredTasks = filteredTasks.filter(task => {
-          if (key === 'dueDate') {
-            const taskDate = new Date(task[key]);
-            const filterDate = new Date(value);
-            return taskDate.toDateString() === filterDate.toDateString();
+          switch (key) {
+            case 'Status':
+              return task.Status.toLowerCase() === value.toLowerCase();
+            case 'Priority':
+              return task.Priority.toLowerCase() === value.toLowerCase();
+            case 'DueDate':
+              if (!task.DueDate) return false;
+              const taskDate = new Date(task.DueDate);
+              const filterDate = new Date(value);
+              return taskDate.toDateString() === filterDate.toDateString();
+            case 'AssignedTo':
+              return task.AssignedTo === value;
+            default:
+              return true;
           }
-          return task[key] === value;
         });
       }
     });
 
     filteredTasks.sort((a, b) => {
-      if (sortBy === 'dueDate') {
-        return new Date(a[sortBy]) - new Date(b[sortBy]);
+      switch (sortBy) {
+        case 'DueDate':
+          return new Date(a.DueDate || '9999-12-31') - new Date(b.DueDate || '9999-12-31');
+        case 'Priority':
+          const priorityOrder = { high: 3, medium: 2, low: 1 };
+          return priorityOrder[b.Priority.toLowerCase()] - priorityOrder[a.Priority.toLowerCase()];
+        case 'Status':
+          return a.Status.localeCompare(b.Status);
+        default:
+          return 0;
       }
-      return a[sortBy] > b[sortBy] ? 1 : -1;
     });
 
     return filteredTasks;
@@ -88,8 +112,8 @@ function Tasks() {
             <FormControl fullWidth>
               <InputLabel>Status</InputLabel>
               <Select
-                value={filters.status || ""}
-                onChange={(e) => setFilters({...filters, status: e.target.value})}
+                value={filters.Status || ""}
+                onChange={(e) => setFilters({...filters, Status: e.target.value})}
                 label="Status"
               >
                 <MenuItem value="">All Statuses</MenuItem>
@@ -103,8 +127,8 @@ function Tasks() {
             <FormControl fullWidth>
               <InputLabel>Priority</InputLabel>
               <Select
-                value={filters.priority || ""}
-                onChange={(e) => setFilters({...filters, priority: e.target.value})}
+                value={filters.Priority || ""}
+                onChange={(e) => setFilters({...filters, Priority: e.target.value})}
                 label="Priority"
               >
                 <MenuItem value="">All Priorities</MenuItem>
@@ -118,18 +142,26 @@ function Tasks() {
             <TextField
               fullWidth
               type="date"
-              value={filters.dueDate || ""}
-              onChange={(e) => setFilters({...filters, dueDate: e.target.value})}
+              value={filters.DueDate || ""}
+              onChange={(e) => setFilters({...filters, DueDate: e.target.value})}
               label="Due Date"
+              InputLabelProps={{ shrink: true }}
             />
           </Grid>
           <Grid item xs={12} sm={3}>
-            <TextField
-              fullWidth
-              value={filters.assignedTo || ""}
-              onChange={(e) => setFilters({...filters, assignedTo: e.target.value})}
-              label="Assigned To"
-            />
+            <FormControl fullWidth>
+              <InputLabel>Assigned To</InputLabel>
+              <Select
+                value={filters.AssignedTo || ""}
+                onChange={(e) => setFilters({...filters, AssignedTo: e.target.value})}
+                label="Assigned To"
+              >
+                <MenuItem value="">All Users</MenuItem>
+                {users?.map(user => (
+                  <MenuItem key={user._id} value={user._id}>{user.Name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
           </Grid>
           <Grid item xs={12} sm={3}>
             <FormControl fullWidth>
@@ -139,9 +171,9 @@ function Tasks() {
                 onChange={(e) => setSortBy(e.target.value)}
                 label="Sort By"
               >
-                <MenuItem value="dueDate">Due Date</MenuItem>
-                <MenuItem value="priority">Priority</MenuItem>
-                <MenuItem value="status">Status</MenuItem>
+                <MenuItem value="DueDate">Due Date</MenuItem>
+                <MenuItem value="Priority">Priority</MenuItem>
+                <MenuItem value="Status">Status</MenuItem>
               </Select>
             </FormControl>
           </Grid>

@@ -1,12 +1,12 @@
+import React, { useState, useMemo } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import Box from '@mui/material/Box';
 import Login from './Login';
 import Registration from './Registration';
 import { lightTheme, darkTheme } from './theme';
 import './App.css';
-import Dashboard from './Dashboard';
-import Layout from './Layout';
-import { useState } from 'react';
 import DashboardLayoutNavigationLinks from './Dashboard';
 
 function App() {
@@ -16,13 +16,25 @@ function App() {
     setDarkMode(!darkMode);
   };
 
+  const theme = useMemo(() => createTheme(darkMode ? darkTheme : lightTheme), [darkMode]);
+
   return (
-    <ThemeProvider theme={darkMode ? darkTheme : lightTheme}>
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="register" element={<Registration />} />
-        <Route path="/dashboard/*" element={<DashboardLayoutNavigationLinks />} />
-      </Routes>
+    <ThemeProvider theme={theme}>
+      {console.log(theme)}
+      <CssBaseline />
+      <Box
+        sx={{
+          bgcolor: theme.palette.background.default,
+          minHeight: '100vh',
+          color: theme.palette.text.primary,
+        }}
+      >
+        <Routes>
+          <Route path="/" element={<Login />}/>
+          <Route path="/register" element={<Registration />} />
+          <Route path="/dashboard/*" element={<DashboardLayoutNavigationLinks />} />
+        </Routes>
+      </Box>
     </ThemeProvider>
   );
 }

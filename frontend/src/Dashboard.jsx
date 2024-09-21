@@ -49,7 +49,7 @@ function DemoPageContent({ pathname }) {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            textAlign: 'center',
+            textAlign: 'center'
           }}
         >
           {renderContent()}  

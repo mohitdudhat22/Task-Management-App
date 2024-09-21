@@ -17,7 +17,10 @@ export const TodoProvider = ({ children }) => {
   const [todos, setTodos] = useState({ current: [], pending: [], completed: [] });
   const [filters, setFilters] = useState({});
   const [sortBy, setSortBy] = useState('dueDate');
-  const [savedFilters, setSavedFilters] = useState([]);
+  const [savedFilters, setSavedFilters] = useState(() => {
+    const storedFilters = localStorage.getItem('savedFilters');
+    return storedFilters ? JSON.parse(storedFilters) : [];
+  });
   const [users, setUsers] = useState([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedUser, setSelectedUser] = useState("");
@@ -41,6 +44,10 @@ export const TodoProvider = ({ children }) => {
       socket.off('delete-task');
     };
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem('savedFilters', JSON.stringify(savedFilters));
+  }, [savedFilters]);
 
   const handleSocketUpdate = (updatedTask) => {
     setTodos(prev => ({
@@ -161,12 +168,20 @@ export const TodoProvider = ({ children }) => {
 
   const saveFilter = (name, filterConfig) => {
     const newFilter = { id: uuidv4(), name, config: filterConfig };
-    setSavedFilters(prev => [...prev, newFilter]);
+    setSavedFilters(prev => {
+      const updatedFilters = [...prev, newFilter];
+      localStorage.setItem('savedFilters', JSON.stringify(updatedFilters));
+      return updatedFilters;
+    });
     toast.success("Filter saved successfully!");
   };
 
   const deleteFilter = (filterId) => {
-    setSavedFilters(prev => prev.filter(filter => filter.id !== filterId));
+    setSavedFilters(prev => {
+      const updatedFilters = prev.filter(filter => filter.id !== filterId);
+      localStorage.setItem('savedFilters', JSON.stringify(updatedFilters));
+      return updatedFilters;
+    });
     toast.success("Filter deleted successfully!");
   };
 
@@ -255,7 +270,6 @@ export const TodoProvider = ({ children }) => {
     setTodo,
     setFilterName
   };
-
 
   return <TodoContext.Provider value={value}>{children}</TodoContext.Provider>;
 };
