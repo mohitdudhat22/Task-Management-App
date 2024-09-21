@@ -48,12 +48,10 @@ const getTasks = async (req, res) => {
 
         if(req.user.role === 'admin'){
             const tasks = await TaskModel.find({ AssignedBy: userId });
-            console.log(tasks , "tasks");
             return res.status(200).json(tasks);
         }
         
         const tasks = await TaskModel.find({ AssignedTo: userId });
-        console.log(tasks , "tasks");
         return res.status(200).json(tasks);
         
     } catch (error) {
@@ -79,35 +77,46 @@ const deleteTask = async (req, res) => {
     }
 };
 
-const editTask = async (req, res) => {  
+const editTask = async (req, res) => {
+    console.log("inside of the editing", req.body);
     try {
         const { id } = req.params;
-        const { title, description, status, dueDate, priority, assignedTo } = req.body;
+        const { Title, Description, Status, DueDate, Priority, AssignedTo} = req.body;
         const userId = req.user.id;
 
-        const task = await TaskModel.findOneAndUpdate(
-            { _id: id},
-            { 
-                Task: title,
-                Description: description,
-                Status: status,
-                UpdatedAt: new Date(),
-                DueDate: dueDate,
-                Priority: priority,
-                AssignedTo: assignedTo,
-                AssignedBy: userId,
-                IsAssignedByAdmin: isAssignedByAdmin,
-            },
-            { new: true }
+        let dueDateUpdated = DueDate;
+        if (DueDate) {
+            const parsedDate = new Date(DueDate);
+            if (!isNaN(parsedDate.getTime())) {
+                dueDateUpdated = parsedDate.toISOString();
+            }
+        }
 
+        const updateData = {
+            Task: Title,
+            Description: Description,
+            Status: Status,
+            DueDate: dueDateUpdated,
+            Priority: Priority,
+            AssignedTo: AssignedTo,
+            AssignedBy: userId,
+            IsAssignedByAdmin: req.user.role === 'admin',
+        };
+
+        const task = await TaskModel.findOneAndUpdate(
+            { _id: id },
+            updateData,
+            { new: true, runValidators: true }
         );
 
         if (!task) {
             return res.status(404).json({ error: "Task not found or not authorized" });
         }
+
         getIO().emit('task-updated', task);
         res.status(200).json(task);
     } catch (error) {
+        console.error('Error updating task:', error);
         res.status(500).json({ error: error.message });
     }
 };

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { CSVLink } from "react-csv";
 import Papa from 'papaparse';
@@ -23,8 +23,9 @@ function Todo() {
     setIsEditing,
     editId,
     setEditId,
+    todo: editingTodo,
+    setTodo: setEditingTodo,
   } = useTodoContext();
-
 
   const [todo, setTodo] = useState({
     Title: "",
@@ -35,15 +36,36 @@ function Todo() {
     AssignedTo: ""
   });
 
+  useEffect(() => {
+    if (isEditing && editingTodo) {
+      setTodo({
+        Title: editingTodo.Task,
+        Description: editingTodo.Description || "",
+        Status: editingTodo.Status,
+        DueDate: editingTodo.DueDate || "",
+        Priority: editingTodo.Priority || "medium",
+        AssignedTo: editingTodo.AssignedTo || ""
+      });
+    }
+  }, [isEditing, editingTodo]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setTodo(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleAddTodo = () => {
+  const handleAddOrUpdateTodo = () => {
     if (todo.Title.trim() === "") return;
-    addTodo(todo);
+    
+    if (isEditing) {
+      updateTodo(editId, todo);
+      setIsEditing(false);
+      setEditId(null);
+      setEditingTodo(null);
+    } else {
+      addTodo(todo);
+    }
+
     setTodo({
       Title: "",
       Description: "",
@@ -53,22 +75,6 @@ function Todo() {
       AssignedTo: ""
     });
   };
-
-  const handleUpdateTodo = () => {
-    updateTodo(editId, todo);
-    setIsEditing(false);
-    setEditId(null);
-    setTodo({
-      Title: "",
-      Description: "",
-      Status: "current",
-      DueDate: "",
-      Priority: "medium",
-      AssignedTo: ""
-    });
-  };
-
-
 
   const prepareCSVData = () => {
     return Object.values(todos).flat().map(task => ({
@@ -285,7 +291,7 @@ function Todo() {
                 fullWidth
                 variant="contained"
                 color="primary"
-                onClick={isEditing ? handleUpdateTodo : handleAddTodo}
+                onClick={handleAddOrUpdateTodo}
               >
                 {isEditing ? "Update Task" : "Add Task"}
               </Button>

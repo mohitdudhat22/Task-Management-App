@@ -24,6 +24,7 @@ export const TodoProvider = ({ children }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
   const [filterName, setFilterName] = useState("");
+  const [todo, setTodo] = useState({});
 
   useEffect(() => {
     fetchTasks(setTodos);
@@ -250,8 +251,11 @@ export const TodoProvider = ({ children }) => {
     editId,
     setEditId,
     filterName,
+    todo,
+    setTodo,
     setFilterName
   };
+
 
   return <TodoContext.Provider value={value}>{children}</TodoContext.Provider>;
 };

@@ -1,17 +1,13 @@
-
 import { useMemo } from 'react';
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { useTodoContext } from "./Context/TodoContext";
 import {
   Grid, Paper, Typography, IconButton, Box, Button,
-  Chip
+  Chip, TextField, Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
 import { Delete as DeleteIcon, Edit as EditIcon, PlayArrow as StartIcon } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 import toast from 'react-hot-toast';
-import {
-    TextField, Select, MenuItem, FormControl, InputLabel
-  } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 
 function Tasks() {
   const theme = useTheme();
@@ -23,18 +19,18 @@ function Tasks() {
     isAdmin,
     deleteTodo,
     changeStatus,
-    handleEdit,
     assignTask,
-    onDragEnd,
     setFilters,
     setSortBy,
     savedFilters,
     setSavedFilters,
     filterName,
     setFilterName,
-    
+    setTodo,
+    setIsEditing,
+    setEditId
   } = useTodoContext();
-
+  const navigate = useNavigate();
 
   const saveCurrentFilter = () => {
     if (filterName.trim() === "") {
@@ -77,13 +73,15 @@ function Tasks() {
     return filteredTasks;
   }, [todos, filters, sortBy]);
 
-
-
+  const handleEditTask = (task) => {
+    setTodo(task);
+    setIsEditing(true);
+    setEditId(task._id);
+    navigate('/dashboard/todo');
+  };
 
   return (
-
-    <DragDropContext onDragEnd={onDragEnd}>
-        
+    <>
       <Paper elevation={2} sx={{ padding: 2, marginBottom: 4 }}>
         <Grid container spacing={2}>
           <Grid item xs={12} sm={3}>
@@ -180,84 +178,71 @@ function Tasks() {
           </Grid>
         </Grid>
       </Paper>
-    <Grid container spacing={3}>
-      {['current', 'pending', 'completed'].map((status) => (
-        <Grid item xs={12} md={4} key={status}>
-          <Droppable droppableId={status}>
-            {(provided) => (
-              <Paper
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                elevation={3}
-                sx={{ padding: 2, height: '100%' }}
-              >
-                <Typography variant="h6" gutterBottom>{status.charAt(0).toUpperCase() + status.slice(1)}</Typography>
-                {filteredAndSortedTasks.filter(todo => todo.Status === status).map((todo, index) => (
-                  <Draggable key={todo._id} draggableId={todo._id.toString()} index={index}>
-                    {(provided) => (
-                      <Paper
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        elevation={2}
-                        sx={{
-                          padding: 2,
-                          marginBottom: 2,
-                          backgroundColor: theme.palette.background.default,
-                          '&:hover': {
-                            backgroundColor: theme.palette.action.hover,
-                          },
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Typography variant="subtitle1">{todo.Task}</Typography>
-                          <Box>
-                            {status === 'current' && (
-                              <>
-                                <IconButton onClick={() => changeStatus(todo._id, 'current', 'pending')} size="small">
-                                  <StartIcon />
-                                </IconButton>
-                                <IconButton onClick={() => handleEdit(todo)} size="small">
-                                  <EditIcon />
-                                </IconButton>
-                              </>
-                            )}
-                            <IconButton onClick={() => deleteTodo(todo._id, status)} size="small">
-                              <DeleteIcon />
-                            </IconButton>
-                          </Box>
-                        </Box>
-                        <Typography variant="body2" color="textSecondary">
-                          Due: {todo.DueDate || 'Not set'}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          Priority: {todo.Priority || 'Not set'}
-                        </Typography>
-                        <Typography variant="body2" color="textSecondary">
-                          Assigned to: {users?.find(user => user._id === todo.AssignedTo)?.Name || 'Not assigned'}
-                        </Typography>
-                        {isAdmin && (
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => assignTask(todo._id)}
-                            sx={{ marginTop: 1 }}
-                          >
-                            Assign Task
-                          </Button>
-                        )}
-                      </Paper>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </Paper>
-            )}
-          </Droppable>
-        </Grid>
-      ))}
-    </Grid>
-  </DragDropContext>
+      <Grid container spacing={3}>
+        {['current', 'pending', 'completed'].map((status) => (
+          <Grid item xs={12} md={4} key={status}>
+            <Paper
+              elevation={3}
+              sx={{ padding: 2, height: '100%' }}
+            >
+              <Typography variant="h6" gutterBottom>{status.charAt(0).toUpperCase() + status.slice(1)}</Typography>
+              {filteredAndSortedTasks.filter(todo => todo.Status === status).map((todo) => (
+                <Paper
+                  key={todo._id}
+                  elevation={2}
+                  sx={{
+                    padding: 2,
+                    marginBottom: 2,
+                    backgroundColor: theme.palette.background.default,
+                    '&:hover': {
+                      backgroundColor: theme.palette.action.hover,
+                    },
+                  }}
+                >
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="subtitle1">{todo.Task}</Typography>
+                    <Box>
+                      {status === 'current' && (
+                        <>
+                          <IconButton onClick={() => changeStatus(todo._id, 'current', 'pending')} size="small">
+                            <StartIcon />
+                          </IconButton>
+                          <IconButton onClick={() => handleEditTask(todo)} size="small">
+                            <EditIcon />
+                          </IconButton>
+                        </>
+                      )}
+                      <IconButton onClick={() => deleteTodo(todo._id, status)} size="small">
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                  <Typography variant="body2" color="textSecondary">
+                    Due: {todo.DueDate || 'Not set'}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Priority: {todo.Priority || 'Not set'}
+                  </Typography>
+                  <Typography variant="body2" color="textSecondary">
+                    Assigned to: {users?.find(user => user._id === todo.AssignedTo)?.Name || 'Not assigned'}
+                  </Typography>
+                  {isAdmin && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => assignTask(todo._id)}
+                      sx={{ marginTop: 1 }}
+                    >
+                      Assign Task
+                    </Button>
+                  )}
+                </Paper>
+              ))}
+            </Paper>
+          </Grid>
+        ))}
+      </Grid>
+    </>
   );
 }
 
