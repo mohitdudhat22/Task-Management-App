@@ -6,7 +6,7 @@ import { createTheme } from '@mui/material/styles';
 import DescriptionIcon from '@mui/icons-material/Description';
 import { AppProvider } from '@toolpad/core/AppProvider';
 import { DashboardLayout } from '@toolpad/core/DashboardLayout';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Todo from './Todo';
 import Tasks from './Tasks';
 
@@ -33,9 +33,9 @@ function DemoPageContent({ pathname }) {
     const renderContent = () => {
         switch (pathname) {
 
-          case '/tasks':
+          case '/dashboard/tasks':
             return <Tasks/>;
-          case '/todo':
+          case '/dashboard/todo':
             return <Todo />;
           default:
             return <Typography>Dashboard content for {pathname}</Typography>;
@@ -61,25 +61,21 @@ DemoPageContent.propTypes = {
   pathname: PropTypes.string.isRequired,
 };
 
-// Main component for dashboard layout with navigation links
 function DashboardLayoutNavigationLinks(props) {
   const { window } = props;
-
-  const [pathname, setPathname] = React.useState('/home');
+  const location = useLocation();
   const navigate = useNavigate();
 
   const router = React.useMemo(() => {
     return {
-      pathname,
-      searchParams: new URLSearchParams(),
+      pathname: location.pathname,
+      searchParams: new URLSearchParams(location.search),
       navigate: (path) => {
-        setPathname(path);
-        navigate(path); // This will change the URL
+        navigate(`/dashboard${path}`);
       },
     };
-  }, [pathname, navigate]);
+  }, [location, navigate]);
 
-  // Demo window
   const demoWindow = window !== undefined ? window() : undefined;
 
   return (
@@ -89,7 +85,6 @@ function DashboardLayoutNavigationLinks(props) {
           segment: 'tasks',
           title: 'Tasks',
           icon: <DescriptionIcon />,
-
         },
         {
           segment: 'todo',
@@ -102,7 +97,7 @@ function DashboardLayoutNavigationLinks(props) {
       window={demoWindow}
     >
       <DashboardLayout>
-        <DemoPageContent pathname={pathname} />
+        <DemoPageContent pathname={location.pathname} />
       </DashboardLayout>
     </AppProvider>
   );

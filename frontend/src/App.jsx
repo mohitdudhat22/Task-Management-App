@@ -21,8 +21,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="register" element={<Registration />} />
+        <Route path="/dashboard/*" element={<DashboardLayoutNavigationLinks />} />
       </Routes>
-      <DashboardLayoutNavigationLinks/>
     </ThemeProvider>
   );
 }
