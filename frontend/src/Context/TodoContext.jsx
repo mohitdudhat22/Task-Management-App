@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
 import { getAuthHeaders, fetchTasks, fetchUsers, checkAdminStatus } from './apiUtils';
 import axios from 'axios';
+import { getMessaging, onMessage } from 'firebase/messaging';
+import { requestFCMToken, onTokenRefresh } from '../utils/firebaseUtils';
 
 const API_URL = import.meta.env.VITE_API_URL;
 const socket = io(API_URL);
@@ -28,8 +30,33 @@ export const TodoProvider = ({ children }) => {
   const [editId, setEditId] = useState(null);
   const [filterName, setFilterName] = useState("");
   const [todo, setTodo] = useState({});
+  const [fcmToken, setFcmToken] = useState('')
 
   useEffect(() => {
+    const messaging = getMessaging();
+
+    // Request the FCM token initially
+    requestFCMToken()
+        .then(token => {
+            console.log('FCM Token from context:', token);
+            setFcmToken(token);
+        })
+        .catch(error => {
+            console.error('Error fetching FCM token:', error);
+        });
+
+    // Set up onMessage listener
+    onMessage(messaging, (payload) => {
+        console.log('Foreground message:', payload);
+    });
+
+    // Set up token refresh listener
+    onTokenRefresh(messaging, (newToken) => {
+        console.log('New FCM Token:', newToken);
+        setFcmToken(newToken);
+    });
+
+    // Other initialization logic
     fetchTasks(setTodos);
     fetchUsers(setUsers);
     checkAdminStatus(setIsAdmin);
@@ -39,11 +66,12 @@ export const TodoProvider = ({ children }) => {
     socket.on('delete-task', handleDeleteTask);
 
     return () => {
-      socket.off('update-task-list');
-      socket.off('add-new-task');
-      socket.off('delete-task');
+        socket.off('update-task-list');
+        socket.off('add-new-task');
+        socket.off('delete-task');
     };
-  }, []);
+}, []);
+
 
   useEffect(() => {
     localStorage.setItem('savedFilters', JSON.stringify(savedFilters));
@@ -238,6 +266,7 @@ export const TodoProvider = ({ children }) => {
 
   const value = {
     todos,
+    fcmToken,
     setTodos,
     filters,
     setFilters,

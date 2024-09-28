@@ -10,6 +10,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Todo from './Todo';
 import Tasks from './Tasks';
 import { useTheme } from '@mui/material/styles';
+import SendNotificationForm from './SendNotificationForm';
 
 // Create a theme for the app
 const demoTheme = createTheme({
@@ -39,6 +40,8 @@ function DemoPageContent({ pathname }) {
         return <Tasks />;
       case '/dashboard/todo':
         return <Todo />;
+      case '/dashboard/send-notification':
+        return <SendNotificationForm />;
       default:
         return <Typography>Dashboard content for {pathname}</Typography>;
     }
@@ -96,6 +99,11 @@ function DashboardLayoutNavigationLinks(props) {
           title: 'Todo',
           icon: <DescriptionIcon />,
         },
+        {
+          segment: 'send-notification',
+          title: 'Send Notification',
+          icon: <DescriptionIcon />,
+        }
       ]}
       router={router}
       theme={demoTheme}

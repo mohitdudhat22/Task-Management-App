@@ -4,11 +4,13 @@ const dbConnect = require('./config/dbConnect');
 const cors = require('cors');
 const taskRouter = require('./router/taskRoutes');
 const authRouter = require('./router/authRoutes');
-const notificationRoutes = require('./router/notificationRoutes');
-const teamRoute = require('./router/teamRoutes')
+const teamRoute = require('./router/teamRoutes');
+const authRoute = require('./router/authRoutes');
 const { initSocket } = require('./socket');
 const http = require('http');
 const cronJobs = require('./cronJobs');
+const notificationRoutes = require('./router/notificationRoutes');
+const bodyParser = require('body-parser');
 dotenv.config();
 
 const app = express();
@@ -42,11 +44,13 @@ const allowedOrigins = [
   };
   
   app.use(cors(corsOptions));
+  app.use(bodyParser.json());
 
-// app.use('/notifications', notificationRoutes);
+app.use('/api/notifications', notificationRoutes);  
 app.use('/api', taskRouter);
 app.use('/api/auth', authRouter);
-app.use('/team',teamRoute )
+app.use('/team',teamRoute );
+
 
 app.get('/health-check', (req, res) => {
     return res.send("Server is On");
