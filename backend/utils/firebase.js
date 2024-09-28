@@ -1,5 +1,5 @@
 let admin = require('firebase-admin');
-import dotenv from 'dotenv';
+const dotenv = require('dotenv');
 dotenv.config();
 let serviceAccount = require(processs.env.FIREBASE_ADMIN_SDK);
 
